@@ -10,8 +10,7 @@ let socket: net.Socket;
 
 export function activate(context: ExtensionContext) {
 
-	let arxmlLSPath: string = path.join(__dirname, "../../ARXML_LanguageServer/build/ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
-	window.showInformationMessage("Activating");
+	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
 	return launchServer(context, arxmlLSPath);
 }
 
@@ -43,7 +42,7 @@ function createServerWithSocket(executablePath: string)
 		});
 		server.listen(12730, '127.0.0.1', () => {
 			console.log("Server bound on \"127.0.0.1:12730\"");
-			//exec = child_process.spawn(executablePath);
+			exec = child_process.spawn(executablePath);
 		});
 	});
 }

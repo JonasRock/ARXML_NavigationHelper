@@ -1,7 +1,8 @@
 {
 	"name": "arxml-navigationhelper",
-	"displayName": "ARXML_NavigationHelper",
+	"displayName": "ARXML Navigation Helper",
 	"description": "Provides reference navigation for ARXML files",
+	"publisher": "jonasrock",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.49.0"
@@ -14,14 +15,7 @@
 		"onLanguage:xml"
 	],
 	"main": "./out/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "arxml-navigationhelper.helloWorld",
-				"title": "Hello World"
-			}
-		]
-	},
+
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
