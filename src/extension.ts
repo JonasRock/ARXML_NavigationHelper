@@ -40,9 +40,10 @@ function createServerWithSocket(executablePath: string)
 			server.close();
 			resolve(exec);
 		});
-		server.listen(12730, '127.0.0.1', () => {
-			console.log("Server bound on \"127.0.0.1:12730\"");
-			exec = child_process.spawn(executablePath);
+		server.listen(0, '127.0.0.1', () => {
+			var portNr: Number = ((server.address() as any).port);
+			console.log("Listening on Port " + portNr);
+			exec = child_process.spawn(executablePath, [portNr.toString()]);
 		});
 	});
 }
