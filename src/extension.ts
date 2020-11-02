@@ -21,8 +21,6 @@ function launchServer(context: ExtensionContext, serverPath: string)
 		documentSelector: [{ language: 'xml', pattern: '**/*.arxml' }]
 	};
 	const client = new LanguageClient('ARXML_LanguageServer', 'ARXML Language Server', serverOptions, clientOptions);
-	client.trace = Trace.Verbose;
-	window.showInformationMessage("Launching");
 	context.subscriptions.push(client.start());
 }
 
@@ -43,7 +41,7 @@ function createServerWithSocket(executablePath: string)
 		server.listen(0, '127.0.0.1', () => {
 			var portNr: Number = ((server.address() as any).port);
 			console.log("Listening on Port " + portNr);
-			exec = child_process.spawn(executablePath, [portNr.toString()]);
+			//exec = child_process.spawn(executablePath, [portNr.toString()]);
 		});
 	});
 }
