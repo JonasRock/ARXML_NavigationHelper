@@ -18,7 +18,7 @@ function launchServer(context: ExtensionContext, serverPath: string)
 {
 	const serverOptions: ServerOptions = () => createServerWithSocket(serverPath).then<StreamInfo>(() => ({ reader: socket, writer: socket }));
 	const clientOptions: LanguageClientOptions = {
-		documentSelector: [{ language: 'xml' }]
+		documentSelector: [{ language: 'xml', pattern: '**/*.arxml' }]
 	};
 	const client = new LanguageClient('ARXML_LanguageServer', 'ARXML Language Server', serverOptions, clientOptions);
 	client.trace = Trace.Verbose;

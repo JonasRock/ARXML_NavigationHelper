@@ -11,7 +11,6 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:arxml-navigationhelper.helloWorld",
 		"onLanguage:xml"
 	],
 	"main": "./out/extension.js",
