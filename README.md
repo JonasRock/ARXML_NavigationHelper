@@ -40,7 +40,7 @@ This can currently only open the file in readonly mode.
 When first executing a jump on a file, the file has to be parsed by the extension.
 This takes a couple of seconds for bigger files (around 5 seconds for 170MB for me).
 Afterwards jumps to definition should be almost instant.
-References can take a while to load, especially on bigger files because VSCode needs to load in all the surrounding areas for the references, the language server itself cannot speed that up.
+Things can take a while to load, especially on bigger files because VSCode needs to load in all the surrounding areas for the references, the language server itself cannot speed that up.
 
 ### No definition found ###
 

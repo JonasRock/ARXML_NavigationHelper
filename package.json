@@ -14,6 +14,23 @@
 		"onLanguage:xml"
 	],
 	"main": "./out/extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "ARXML Navigation Helper",
+			"properties": {
+				"arxmlNavigationHelper.maxOpenFiles": {
+					"type": "number",
+					"default": 5,
+					"description": "Maximum number of files open before the replacing old ones"
+				},
+				"arxmlNavigationHelper.precalculateOnOpeningFiles": {
+					"type": "boolean",
+					"default": true,
+					"description": "True: Files get parsed as soon as they come into focus in the editor\nFalse: Files get parsed on first command. This will cause the first jump to be delayed but can reduce the number of parsed files"
+				}
+			}
+		}
+	},
 
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
