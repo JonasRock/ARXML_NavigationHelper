@@ -3,7 +3,7 @@
 	"displayName": "ARXML Navigation Helper",
 	"description": "Provides reference navigation for ARXML files",
 	"publisher": "jonasrock",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"engines": {
 		"vscode": "^1.49.0"
 	},
@@ -29,6 +29,14 @@
 					"description": "True: Files get parsed as soon as they come into focus in the editor\nFalse: Files get parsed on first command. This will cause the first jump to be delayed but can reduce the number of parsed files"
 				}
 			}
+		},
+		"views": {
+			"explorer": [
+				{
+					"id": "shortnames",
+					"name": "Shortnames"
+				}
+			]
 		}
 	},
 
