@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Server } from 'http';
 import { stringify } from 'querystring';
 import { promisify } from 'util';
+import { resourceLimits } from 'worker_threads';
 
 let socket: net.Socket;
 let client: LanguageClient;
@@ -13,9 +14,9 @@ let client: LanguageClient;
 export function activate(context: ExtensionContext) {
 
 	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
-	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri);
+	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri.toString());
 
-	window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh);
+	window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh.bind(shortnameTreeDataProvider));
 
 	window.registerTreeDataProvider('shortnames', shortnameTreeDataProvider);
 	return launchServer(context, arxmlLSPath);
@@ -50,7 +51,7 @@ function createServerWithSocket(executablePath: string)
 			var portNr: Number = ((server.address() as any).port);
 			console.log("Listening on Port " + portNr);
 			//Comment out next line if you want to start the server yourself for debugging etc
-			//exec = child_process.spawn(executablePath, [portNr.toString()]);
+			exec = child_process.spawn(executablePath, [portNr.toString()]);
 		});
 	});
 }
@@ -65,17 +66,20 @@ interface ShortnameElement
 class Shortname extends TreeItem{
 	constructor(elem: ShortnameElement)
 	{
-		super("Bananas", 1);
-		this.tooltip = "dragon tooltip"
-		this.description = "Bananas description";
+		super(elem.name, 1);
+		if (elem.path) {
+			this.tooltip = elem.path + '/' + elem.name;
+		}
+		else {
+			this.tooltip = elem.name;
+		}
+		this.description = false;
+		this.collapsibleState = elem.cState;
 	}
-	label = "Bananas";
-	description = "Here be dragons";
-	collapsibleState = 1;
 }
 
 export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
-	constructor(uri: Uri | undefined) {
+	constructor(uri: string | undefined) {
 		this._uri = uri;
 	}
 
@@ -83,36 +87,41 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 		return element;
 	}
 
-	getChildren(element?: Shortname): ProviderResult<Shortname[]> {
+	getChildren(element?: Shortname): Thenable<Shortname[]> {
 
 		//if (client.initializeResult !== undefined) {
-			let params = { elem: element?.description, uri: this._uri };
-			let elem = 
-			{
-				name: "Bananas",
-				path: "banpath",
-				cState: 1
-			};
-			let sn = new Shortname(elem);
-			return Promise.resolve([sn, sn, sn]);
-		// }
-		// else {
-		// 	return Promise.resolve([]);
-		// }
+		let params = { path: element?.tooltip, uri: this._uri };
+		return Promise.resolve<Shortname[]>(
+			client.sendRequest<ShortnameElement[]>("treeView/getChildren", params)
+			.then(function(result){
+				let a = createShortnamesFromShortnameElements(result);
+				return a;
+			})
+		);
 	}
 
 	refresh(textEditor: TextEditor | undefined): void {
 		if (textEditor) {
-			this._uri = textEditor.document.uri;
+			this._uri = textEditor.document.uri.toString();
+			this._onDidChangeTreeData.fire();
 		}
 		else {
 			this._uri = undefined;
 		}
-		this._onDidChangeTreeData.fire();
 	}
 
 	private _onDidChangeTreeData: EventEmitter<Shortname | undefined | null | void> = new EventEmitter<Shortname | undefined | null | void>();
 	readonly onDidChangeTreeData: Event<Shortname | undefined | null | void> = this._onDidChangeTreeData.event;
 
-	private _uri: Uri | undefined;
+	private _uri: String | undefined;
+}
+
+function createShortnamesFromShortnameElements(elems: ShortnameElement[]): Shortname[]
+{
+	let resArray: Shortname[] = [];
+	for (let elem of elems)
+	{
+		resArray.push(new Shortname(elem));
+	}
+	return resArray;
 }
