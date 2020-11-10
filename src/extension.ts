@@ -1,10 +1,11 @@
 import * as net from 'net';
-import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, Uri, extensions, TextEditor} from 'vscode';
+import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, Uri, extensions, TextEditor, ProviderResult} from 'vscode';
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions} from 'vscode-languageclient';
 import * as child_process from 'child_process';
 import * as path from 'path';
 import { Server } from 'http';
 import { stringify } from 'querystring';
+import { promisify } from 'util';
 
 let socket: net.Socket;
 let client: LanguageClient;
@@ -54,13 +55,23 @@ function createServerWithSocket(executablePath: string)
 	});
 }
 
+interface ShortnameElement
+{
+	name: string,
+	path: string,
+	cState: TreeItemCollapsibleState
+}
+
 class Shortname extends TreeItem{
-	constructor(private readonly name: string, private readonly path: string)
+	constructor(elem: ShortnameElement)
 	{
-		super(name);
-		this.tooltip = name + '/' + path;
-		this.description = this.tooltip;
+		super("Bananas", 1);
+		this.tooltip = "dragon tooltip"
+		this.description = "Bananas description";
 	}
+	label = "Bananas";
+	description = "Here be dragons";
+	collapsibleState = 1;
 }
 
 export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
@@ -72,21 +83,26 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 		return element;
 	}
 
-	getChildren(element?: Shortname): Thenable<Shortname[]> {
+	getChildren(element?: Shortname): ProviderResult<Shortname[]> {
 
-		if(client.initializeResult !== undefined)
-		{
-			let params = {elem: element, uri: this._uri};
-			return client.sendRequest<Shortname[]>("treeView/getChildren", params);
-		}
-		else
-		{
-			return Promise.resolve([]);
-		}
+		//if (client.initializeResult !== undefined) {
+			let params = { elem: element?.description, uri: this._uri };
+			let elem = 
+			{
+				name: "Bananas",
+				path: "banpath",
+				cState: 1
+			};
+			let sn = new Shortname(elem);
+			return Promise.resolve([sn, sn, sn]);
+		// }
+		// else {
+		// 	return Promise.resolve([]);
+		// }
 	}
-	
+
 	refresh(textEditor: TextEditor | undefined): void {
-		if(textEditor) {
+		if (textEditor) {
 			this._uri = textEditor.document.uri;
 		}
 		else {
