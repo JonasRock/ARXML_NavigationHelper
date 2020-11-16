@@ -33,11 +33,45 @@
 		"views": {
 			"explorer": [
 				{
-					"id": "shortnames",
+					"id": "arxmlNavigationHelper.shortnames",
 					"name": "Shortnames"
 				}
 			]
-		}
+		},
+		"menus": {
+			"view/item/context": [
+				{
+					"command": "arxmlNavigationHelper.definition",
+					"when": "view == arxmlNavigationHelper.shortnames"
+				},
+				{
+					"command": "arxmlNavigationHelper.references",
+					"when": "view == arxmlNavigationHelper.shortnames"
+				}
+			],
+			"view/title": [
+				{
+					"command": "arxmlNavigationHelper.refreshTreeView",
+					"when": "view == arxmlNavigationHelper.shortnames",
+					"group": "navigation"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "arxmlNavigationHelper.definition",
+				"title": "Go to definition"
+			},
+			{
+				"command": "arxmlNavigationHelper.references",
+				"title": "Go to references"
+			},
+			{
+				"command": "arxmlNavigationHelper.refreshTreeView",
+				"title": "Refresh Tree View",
+				"icon": "$(search-refresh)"
+			}
+		]
 	},
 
 	"scripts": {
