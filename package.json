@@ -41,11 +41,11 @@
 		"menus": {
 			"view/item/context": [
 				{
-					"command": "arxmlNavigationHelper.definition",
+					"command": "arxmlNavigationHelper.treeDefinition",
 					"when": "view == arxmlNavigationHelper.shortnames"
 				},
 				{
-					"command": "arxmlNavigationHelper.references",
+					"command": "arxmlNavigationHelper.treeReferences",
 					"when": "view == arxmlNavigationHelper.shortnames"
 				}
 			],
@@ -59,11 +59,11 @@
 		},
 		"commands": [
 			{
-				"command": "arxmlNavigationHelper.definition",
+				"command": "arxmlNavigationHelper.treeDefinition",
 				"title": "Go to definition"
 			},
 			{
-				"command": "arxmlNavigationHelper.references",
+				"command": "arxmlNavigationHelper.treeReferences",
 				"title": "Go to references"
 			},
 			{

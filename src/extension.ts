@@ -19,8 +19,8 @@ export function activate(context: ExtensionContext) {
 
 	window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider);
 	window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh.bind(shortnameTreeDataProvider));
-	commands.registerCommand('arxmlNavigationHelper.definition', definition);
-	commands.registerCommand('arxmlNavigationHelper.references', references);
+	commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition);
+	commands.registerCommand('arxmlNavigationHelper.treeReferences', references);
 	commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh());
 
 	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
@@ -78,7 +78,7 @@ class Shortname extends TreeItem {
 		this.description = false;
 		this.collapsibleState = elem.cState;
 		this.pos = elem.pos;
-		this.command = { title: "go to definition", command: "arxmlNavigationHelper.definition", arguments: [this]};
+		this.command = { title: "go to definition", command: "arxmlNavigationHelper.treeDefinition", arguments: [this]};
 	}
 	pos: Position;
 }
@@ -107,8 +107,10 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 	refresh(): void {
 		if (client.initializeResult) {
 			if (window.activeTextEditor) {
-				this._uri = window.activeTextEditor.document.uri.toString();
-				this._onDidChangeTreeData.fire();
+				if (window.activeTextEditor.document.languageId === "xml") {
+					this._uri = window.activeTextEditor.document.uri.toString();
+					this._onDidChangeTreeData.fire();
+				}
 			}
 			else {
 				this._uri = undefined;
