@@ -1,6 +1,6 @@
 import * as net from 'net';
-import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, TextEditor, Position, ViewColumn, commands, TextEditorCursorStyle, Selection, Uri, Range, TextEditorRevealType } from 'vscode';
-import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, Command } from 'vscode-languageclient';
+import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, TextEditor, Position, ViewColumn, commands, TextEditorCursorStyle, Selection, Uri, Range, TextEditorRevealType, Location } from 'vscode';
+import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, Command, Disposable } from 'vscode-languageclient';
 import * as child_process from 'child_process';
 import * as path from 'path';
 import { Server } from 'http';
@@ -12,19 +12,25 @@ import { POINT_CONVERSION_COMPRESSED } from 'constants';
 
 let socket: net.Socket;
 let client: LanguageClient;
+let disposables = new Array<Disposable>();
 
 export function activate(context: ExtensionContext) {
 
 	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri.toString());
-
-	window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider);
-	window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh.bind(shortnameTreeDataProvider));
-	commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition);
-	commands.registerCommand('arxmlNavigationHelper.treeReferences', references);
-	commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh());
+	disposables.push(window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider));
+	disposables.push(window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh.bind(shortnameTreeDataProvider)));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeReferences', references));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh()));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.goToOwner', goToOwner));
+	
 
 	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
 	return launchServer(context, arxmlLSPath);
+}
+
+export function deactivate() {
+	disposables.forEach((value) => value.dispose());
 }
 
 function launchServer(context: ExtensionContext, serverPath: string) {
@@ -134,13 +140,9 @@ function createShortnamesFromShortnameElements(elems: ShortnameElement[]): Short
 
 function definition(node: Shortname) {
 	if (node.label) {
-		let sel = new Selection(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.length - 1);
-		if (window.activeTextEditor) {
-			window.activeTextEditor.selection = sel;
-			window.activeTextEditor.revealRange(new Range(sel.anchor, sel.active), TextEditorRevealType.InCenterIfOutsideViewport);
-		}
+		let range = new Range(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.length - 1);
+		editorGoTo(range);
 	}
-	commands.executeCommand('editor.action.goToSelectionAnchor');
 }
 
 function references(node: Shortname) {
@@ -151,4 +153,33 @@ function references(node: Shortname) {
 		}
 	}
 	commands.executeCommand('editor.action.goToReferences');
+}
+
+function goToOwner() {
+	if (window.activeTextEditor) {
+		let params = {
+			uri: window.activeTextEditor.document.uri.toString(),
+			pos: window.activeTextEditor.selection.active
+		};
+		client.sendRequest<Location>("textDocument/goToOwner", params)
+			.then(function (result) {
+				if(result)
+				{
+					editorGoTo(result);
+				}
+			});
+	}
+}
+
+function editorGoTo(loc: Location | Range) {
+	let sel: Selection;
+	if ('uri' in loc) {
+		sel = new Selection(loc.range.start.line, loc.range.start.character, loc.range.end.line, loc.range.end.character);
+	} else {
+		sel = new Selection(loc.start.line, loc.start.character, loc.end.line, loc.end.character);
+	}
+	if (window.activeTextEditor) {
+		window.activeTextEditor.selection = sel;
+		window.activeTextEditor.revealRange(new Selection(sel.start, sel.end), TextEditorRevealType.InCenterIfOutsideViewport);
+	}
 }

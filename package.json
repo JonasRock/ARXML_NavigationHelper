@@ -55,6 +55,13 @@
 					"when": "view == arxmlNavigationHelper.shortnames",
 					"group": "navigation"
 				}
+			],
+			"editor/context": [
+				{
+					"command": "arxmlNavigationHelper.goToOwner",
+					"when": "editorTextFocus",
+					"group": "navigation"
+				}
 			]
 		},
 		"commands": [
@@ -70,6 +77,10 @@
 				"command": "arxmlNavigationHelper.refreshTreeView",
 				"title": "Refresh Tree View",
 				"icon": "$(search-refresh)"
+			},
+			{
+				"command": "arxmlNavigationHelper.goToOwner",
+				"title": "Go to owner"
 			}
 		]
 	},
