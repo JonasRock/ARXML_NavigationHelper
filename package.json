@@ -27,6 +27,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "True: Files get parsed as soon as they come into focus in the editor\nFalse: Files get parsed on first command. This will cause the first jump to be delayed but can reduce the number of parsed files"
+				},
+				"arxmlNavigationHelper.referenceLinkToParentShortname": {
+					"type": "boolean",
+					"default": true,
+					"description": "True: Go to Reference links to to the shortname owning that reference instead of the reference location itself."
 				}
 			}
 		},
@@ -60,18 +65,30 @@
 				{
 					"command": "arxmlNavigationHelper.goToOwner",
 					"when": "editorTextFocus",
-					"group": "navigation"
+					"group": "arxmlNavigationHelper"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "arxmlNavigationHelper.treeDefinition",
+					"when": "false"
+				},
+				{
+					"command": "arxmlNavigationHelper.treeReferences",
+					"when": "false"
 				}
 			]
 		},
 		"commands": [
 			{
 				"command": "arxmlNavigationHelper.treeDefinition",
-				"title": "Go to definition"
+				"title": "Go to Definition",
+				"enablement": "focusedView == arxmlNavigationHelper.shortnames"
 			},
 			{
 				"command": "arxmlNavigationHelper.treeReferences",
-				"title": "Go to references"
+				"title": "Go to References",
+				"enablement": "focusedView == arxmlNavigationHelper.shortnames"
 			},
 			{
 				"command": "arxmlNavigationHelper.refreshTreeView",
@@ -80,7 +97,7 @@
 			},
 			{
 				"command": "arxmlNavigationHelper.goToOwner",
-				"title": "Go to owner"
+				"title": "Go to Parent Shortname"
 			}
 		]
 	},

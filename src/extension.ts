@@ -15,16 +15,7 @@ let client: LanguageClient;
 let disposables = new Array<Disposable>();
 
 export function activate(context: ExtensionContext) {
-
-	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri.toString());
-	disposables.push(window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider));
-	disposables.push(window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh.bind(shortnameTreeDataProvider)));
-	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition));
-	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeReferences', references));
-	disposables.push(commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh()));
-	disposables.push(commands.registerCommand('arxmlNavigationHelper.goToOwner', goToOwner));
 	
-
 	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
 	return launchServer(context, arxmlLSPath);
 }
@@ -33,13 +24,28 @@ export function deactivate() {
 	disposables.forEach((value) => value.dispose());
 }
 
+function registerTreeView() {
+	
+	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri.toString());
+	disposables.push(window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider));
+	disposables.push(window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh.bind(shortnameTreeDataProvider)));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeReferences', references));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh()));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.goToOwner', goToOwner));
+	
+}
+
 function launchServer(context: ExtensionContext, serverPath: string) {
 	const serverOptions: ServerOptions = () => createServerWithSocket(serverPath).then<StreamInfo>(() => ({ reader: socket, writer: socket }));
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [{ language: 'xml', pattern: '**/*.arxml' }],
-
+		
 	};
 	client = new LanguageClient('ARXML_LanguageServer', 'ARXML Language Server', serverOptions, clientOptions);
+	client.onReady().then(
+		registerTreeView
+	);
 	context.subscriptions.push(client.start());
 }
 
