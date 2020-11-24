@@ -1,5 +1,5 @@
 import * as net from 'net';
-import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, TextEditor, Position, ViewColumn, commands, TextEditorCursorStyle, Selection, Uri, Range, TextEditorRevealType, Location } from 'vscode';
+import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, TextEditor, Position, ViewColumn, commands, TextEditorCursorStyle, Selection, Uri, Range, TextEditorRevealType, Location, ThemeIcon } from 'vscode';
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, Command, Disposable } from 'vscode-languageclient';
 import * as child_process from 'child_process';
 import * as path from 'path';
@@ -15,7 +15,7 @@ let client: LanguageClient;
 let disposables = new Array<Disposable>();
 
 export function activate(context: ExtensionContext) {
-	
+
 	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
 	return launchServer(context, arxmlLSPath);
 }
@@ -25,22 +25,21 @@ export function deactivate() {
 }
 
 function registerTreeView() {
-	
+
 	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri.toString());
 	disposables.push(window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider));
-	disposables.push(window.onDidChangeActiveTextEditor(shortnameTreeDataProvider.refresh.bind(shortnameTreeDataProvider)));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeReferences', references));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh()));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.goToOwner', goToOwner));
-	
+
 }
 
 function launchServer(context: ExtensionContext, serverPath: string) {
 	const serverOptions: ServerOptions = () => createServerWithSocket(serverPath).then<StreamInfo>(() => ({ reader: socket, writer: socket }));
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [{ language: 'xml', pattern: '**/*.arxml' }],
-		
+
 	};
 	client = new LanguageClient('ARXML_LanguageServer', 'ARXML Language Server', serverOptions, clientOptions);
 	client.onReady().then(
@@ -75,24 +74,40 @@ interface ShortnameElement {
 	name: string,
 	path: string,
 	pos: Position,
-	cState: TreeItemCollapsibleState
+	uri: string,
+	cState: TreeItemCollapsibleState,
+	unique: boolean
 }
 
 class Shortname extends TreeItem {
 	constructor(elem: ShortnameElement) {
 		super(elem.name, 1);
-		if (elem.path) {
-			this.tooltip = elem.path + '/' + elem.name;
-		}
-		else {
-			this.tooltip = elem.name;
-		}
+		this.tooltip = "Full path: ";
 		this.description = false;
 		this.collapsibleState = elem.cState;
 		this.pos = elem.pos;
-		this.command = { title: "go to definition", command: "arxmlNavigationHelper.treeDefinition", arguments: [this]};
+		this.uri = Uri.parse(elem.uri);
+		if (elem.path) {
+			this.path = elem.path + '/' + elem.name;
+		}
+		else {
+			this.path = elem.name;
+		}
+		this.tooltip += this.path;
+		if (elem.unique) {
+			this.command = { title: "Go to Definition", command: "arxmlNavigationHelper.treeDefinition", arguments: [this] };
+			this.contextValue = "unique";
+			this.tooltip += "\nLocation: " + this.uri.path;
+		}
+		else{
+			this.iconPath = new ThemeIcon("files");
+			this.tooltip += "\nLocation: multiple files";
+		}
+
 	}
 	pos: Position;
+	uri: Uri;
+	path: string;
 }
 
 export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
@@ -106,7 +121,7 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 
 	getChildren(element?: Shortname): Thenable<Shortname[]> {
 		//if (client.initializeResult !== undefined) {
-		let params = { path: element?.tooltip, uri: this._uri };
+		let params = { path: element?.path, uri: this._uri };
 		return Promise.resolve<Shortname[]>(
 			client.sendRequest<ShortnameElement[]>("treeView/getChildren", params)
 				.then(function (result) {
@@ -147,18 +162,29 @@ function createShortnamesFromShortnameElements(elems: ShortnameElement[]): Short
 function definition(node: Shortname) {
 	if (node.label) {
 		let range = new Range(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.length - 1);
-		editorGoTo(range);
+		if (node.uri) {
+			let loc = new Location(node.uri, range);
+			editorGoTo(loc);
+		}
+		else {
+			editorGoTo(range);
+		}
 	}
 }
 
 function references(node: Shortname) {
 	if (node.label) {
-		let sel = new Selection(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character - 1);
-		if (window.activeTextEditor) {
-			window.activeTextEditor.selection = sel;
+		let range = new Range(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.length - 1);
+		if (node.uri) {
+			let loc = new Location(node.uri, range);
+			editorGoTo(loc, () => {
+				commands.executeCommand("editor.action.goToReferences");
+			});
+		}
+		else {
+			editorGoTo(range);
 		}
 	}
-	commands.executeCommand('editor.action.goToReferences');
 }
 
 function goToOwner() {
@@ -169,23 +195,31 @@ function goToOwner() {
 		};
 		client.sendRequest<Location>("textDocument/goToOwner", params)
 			.then(function (result) {
-				if(result)
-				{
+				if (result) {
 					editorGoTo(result);
 				}
 			});
 	}
 }
 
-function editorGoTo(loc: Location | Range) {
-	let sel: Selection;
+function editorGoTo(loc: Location | Range, callback?: Function) {
 	if ('uri' in loc) {
-		sel = new Selection(loc.range.start.line, loc.range.start.character, loc.range.end.line, loc.range.end.character);
+		window.showTextDocument(loc.uri)
+			.then(function (document) {
+				if (window.activeTextEditor) {
+					let sel = new Selection(loc.range.start.line, loc.range.start.character, loc.range.end.line, loc.range.end.character);
+					window.activeTextEditor.selection = sel;
+					window.activeTextEditor.revealRange(new Selection(sel.start, sel.end), TextEditorRevealType.InCenterIfOutsideViewport);
+					if (callback) {
+						callback();
+					}
+				}
+			});
 	} else {
-		sel = new Selection(loc.start.line, loc.start.character, loc.end.line, loc.end.character);
-	}
-	if (window.activeTextEditor) {
-		window.activeTextEditor.selection = sel;
-		window.activeTextEditor.revealRange(new Selection(sel.start, sel.end), TextEditorRevealType.InCenterIfOutsideViewport);
+		if (window.activeTextEditor) {
+			let sel = new Selection(loc.start.line, loc.start.character, loc.end.line, loc.end.character);
+			window.activeTextEditor.selection = sel;
+			window.activeTextEditor.revealRange(new Selection(sel.start, sel.end), TextEditorRevealType.InCenterIfOutsideViewport);
+		}
 	}
 }

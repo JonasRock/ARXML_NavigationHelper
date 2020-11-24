@@ -47,7 +47,7 @@
 			"view/item/context": [
 				{
 					"command": "arxmlNavigationHelper.treeDefinition",
-					"when": "view == arxmlNavigationHelper.shortnames"
+					"when": "view == arxmlNavigationHelper.shortnames && viewItem == unique"
 				},
 				{
 					"command": "arxmlNavigationHelper.treeReferences",
@@ -83,12 +83,14 @@
 			{
 				"command": "arxmlNavigationHelper.treeDefinition",
 				"title": "Go to Definition",
-				"enablement": "focusedView == arxmlNavigationHelper.shortnames"
+				"enablement": "focusedView == arxmlNavigationHelper.shortnames",
+				"icon": "$(search-goto-file)"
 			},
 			{
 				"command": "arxmlNavigationHelper.treeReferences",
 				"title": "Go to References",
-				"enablement": "focusedView == arxmlNavigationHelper.shortnames"
+				"enablement": "focusedView == arxmlNavigationHelper.shortnames",
+				"icon": "$(references)"
 			},
 			{
 				"command": "arxmlNavigationHelper.refreshTreeView",
