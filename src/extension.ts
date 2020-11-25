@@ -25,26 +25,42 @@ export function deactivate() {
 }
 
 function registerTreeView() {
-
+	
 	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri.toString());
 	disposables.push(window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeReferences', references));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh()));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.goToOwner', goToOwner));
-
+	window.onDidChangeActiveTextEditor(() => shortnameTreeDataProvider.refresh());
+	client.onTelemetry((e) => {
+		if (e.event) {
+			if (e.event === "treeViewReady") {
+				shortnameTreeDataProvider.refresh();
+			}
+			else if (e.event === "error")
+			{
+				if (e.error_type) {
+					console.log("Error received: " + e.error_type);
+				} else {
+					console.log("Unknown error received");
+				}
+			}
+		}
+		else {
+			console.log("Unknown Telemetry: " + e);
+		}
+	});
 }
 
 function launchServer(context: ExtensionContext, serverPath: string) {
 	const serverOptions: ServerOptions = () => createServerWithSocket(serverPath).then<StreamInfo>(() => ({ reader: socket, writer: socket }));
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [{ language: 'xml', pattern: '**/*.arxml' }],
-
+		
 	};
 	client = new LanguageClient('ARXML_LanguageServer', 'ARXML Language Server', serverOptions, clientOptions);
-	client.onReady().then(
-		registerTreeView
-	);
+	client.onReady().then(registerTreeView);
 	context.subscriptions.push(client.start());
 }
 
@@ -103,7 +119,7 @@ class Shortname extends TreeItem {
 			this.iconPath = new ThemeIcon("files");
 			this.tooltip += "\nLocation: multiple files";
 		}
-
+		
 	}
 	pos: Position;
 	uri: Uri;
@@ -114,27 +130,26 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 	constructor(uri: string | undefined) {
 		this._uri = uri;
 	}
-
+	
 	getTreeItem(element: Shortname): TreeItem {
 		return element;
 	}
 
 	getChildren(element?: Shortname): Thenable<Shortname[]> {
-		//if (client.initializeResult !== undefined) {
-		let params = { path: element?.path, uri: this._uri };
+		let params = { path: element?.path, uri: this._uri, unique: element?.contextValue === "unique" };
 		return Promise.resolve<Shortname[]>(
 			client.sendRequest<ShortnameElement[]>("treeView/getChildren", params)
-				.then(function (result) {
+			.then(function (result) {
 					let a = createShortnamesFromShortnameElements(result);
 					return a;
 				})
-		);
-	}
-
-	refresh(): void {
-		if (client.initializeResult) {
-			if (window.activeTextEditor) {
-				if (window.activeTextEditor.document.languageId === "xml") {
+				);
+			}
+			
+			refresh(): void {
+				if (client.initializeResult) {
+					if (window.activeTextEditor) {
+						if (window.activeTextEditor.document.languageId === "xml") {
 					this._uri = window.activeTextEditor.document.uri.toString();
 					this._onDidChangeTreeData.fire();
 				}
@@ -144,10 +159,10 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 			}
 		}
 	}
-
+	
 	private _onDidChangeTreeData: EventEmitter<Shortname | undefined | null | void> = new EventEmitter<Shortname | undefined | null | void>();
 	readonly onDidChangeTreeData: Event<Shortname | undefined | null | void> = this._onDidChangeTreeData.event;
-
+	
 	private _uri: String | undefined;
 }
 
@@ -194,20 +209,20 @@ function goToOwner() {
 			pos: window.activeTextEditor.selection.active
 		};
 		client.sendRequest<Location>("textDocument/goToOwner", params)
-			.then(function (result) {
-				if (result) {
-					editorGoTo(result);
-				}
-			});
+		.then(function (result) {
+			if (result) {
+				editorGoTo(result);
+			}
+		});
 	}
 }
 
 function editorGoTo(loc: Location | Range, callback?: Function) {
 	if ('uri' in loc) {
 		window.showTextDocument(loc.uri)
-			.then(function (document) {
-				if (window.activeTextEditor) {
-					let sel = new Selection(loc.range.start.line, loc.range.start.character, loc.range.end.line, loc.range.end.character);
+		.then(function (document) {
+			if (window.activeTextEditor) {
+				let sel = new Selection(loc.range.start.line, loc.range.start.character, loc.range.end.line, loc.range.end.character);
 					window.activeTextEditor.selection = sel;
 					window.activeTextEditor.revealRange(new Selection(sel.start, sel.end), TextEditorRevealType.InCenterIfOutsideViewport);
 					if (callback) {
@@ -215,8 +230,8 @@ function editorGoTo(loc: Location | Range, callback?: Function) {
 					}
 				}
 			});
-	} else {
-		if (window.activeTextEditor) {
+		} else {
+			if (window.activeTextEditor) {
 			let sel = new Selection(loc.start.line, loc.start.character, loc.end.line, loc.end.character);
 			window.activeTextEditor.selection = sel;
 			window.activeTextEditor.revealRange(new Selection(sel.start, sel.end), TextEditorRevealType.InCenterIfOutsideViewport);

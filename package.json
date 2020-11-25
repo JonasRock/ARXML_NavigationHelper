@@ -18,11 +18,6 @@
 		"configuration": {
 			"title": "ARXML Navigation Helper",
 			"properties": {
-				"arxmlNavigationHelper.maxOpenFiles": {
-					"type": "number",
-					"default": 5,
-					"description": "Maximum number of files open before the replacing old ones"
-				},
 				"arxmlNavigationHelper.precalculateOnOpeningFiles": {
 					"type": "boolean",
 					"default": true,
