@@ -18,11 +18,6 @@
 		"configuration": {
 			"title": "ARXML Navigation Helper",
 			"properties": {
-				"arxmlNavigationHelper.precalculateOnOpeningFiles": {
-					"type": "boolean",
-					"default": true,
-					"description": "True: Files get parsed as soon as they come into focus in the editor\nFalse: Files get parsed on first command. This will cause the first jump to be delayed but can reduce the number of parsed files"
-				},
 				"arxmlNavigationHelper.referenceLinkToParentShortname": {
 					"type": "boolean",
 					"default": true,
