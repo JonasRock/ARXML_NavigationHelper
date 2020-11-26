@@ -180,6 +180,12 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 
 function createShortnamesFromShortnameElements(elems: ShortnameElement[]): Shortname[] {
 	let resArray: Shortname[] = [];
+	if (elems === null) {
+		return resArray;
+	}
+	if (typeof elems[Symbol.iterator] !== 'function') {
+		return resArray;
+	}
 	for (let elem of elems) {
 		resArray.push(new Shortname(elem));
 	}
