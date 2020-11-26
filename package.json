@@ -95,6 +95,10 @@
 			{
 				"command": "arxmlNavigationHelper.goToOwner",
 				"title": "Go to Parent Shortname"
+			},
+			{
+				"command": "arxmlNavigationHelper.restartLanguageServer",
+				"title": "ARXML Navigation Helper: Restart Language Server"
 			}
 		]
 	},

@@ -16,6 +16,19 @@ let disposables = new Array<Disposable>();
 
 export function activate(context: ExtensionContext) {
 
+	context.subscriptions.push(commands.registerCommand("arxmlNavigationHelper.restartLanguageServer", () => {
+		deactivate();
+		for (const subscription of context.subscriptions) {
+			try {
+				subscription.dispose();
+			} catch (e) {
+				console.error(e);
+			}
+		}
+		activate(context);
+	}));
+	
+	
 	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
 	return launchServer(context, arxmlLSPath);
 }
@@ -33,10 +46,19 @@ function registerTreeView() {
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh()));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.goToOwner', goToOwner));
 	window.onDidChangeActiveTextEditor(() => shortnameTreeDataProvider.refresh());
+}
+
+function launchServer(context: ExtensionContext, serverPath: string) {
+	const serverOptions: ServerOptions = () => createServerWithSocket(serverPath).then<StreamInfo>(() => ({ reader: socket, writer: socket }));
+	const clientOptions: LanguageClientOptions = {
+		documentSelector: [{ language: 'xml', pattern: '**/*.arxml' }],
+		
+	};
+	client = new LanguageClient('ARXML_LanguageServer', 'ARXML Language Server', serverOptions, clientOptions);
 	client.onTelemetry((e) => {
 		if (e.event) {
 			if (e.event === "treeViewReady") {
-				shortnameTreeDataProvider.refresh();
+				registerTreeView();
 			}
 			else if (e.event === "error")
 			{
@@ -51,16 +73,6 @@ function registerTreeView() {
 			console.log("Unknown Telemetry: " + e);
 		}
 	});
-}
-
-function launchServer(context: ExtensionContext, serverPath: string) {
-	const serverOptions: ServerOptions = () => createServerWithSocket(serverPath).then<StreamInfo>(() => ({ reader: socket, writer: socket }));
-	const clientOptions: LanguageClientOptions = {
-		documentSelector: [{ language: 'xml', pattern: '**/*.arxml' }],
-		
-	};
-	client = new LanguageClient('ARXML_LanguageServer', 'ARXML Language Server', serverOptions, clientOptions);
-	client.onReady().then(registerTreeView);
 	context.subscriptions.push(client.start());
 }
 
@@ -81,7 +93,7 @@ function createServerWithSocket(executablePath: string) {
 			var portNr: Number = ((server.address() as any).port);
 			console.log("Listening on Port " + portNr);
 			//Comment out next line if you want to start the server yourself for debugging etc
-			//exec = child_process.spawn(executablePath, [portNr.toString()]);
+			exec = child_process.spawn(executablePath, [portNr.toString()]);
 		});
 	});
 }
