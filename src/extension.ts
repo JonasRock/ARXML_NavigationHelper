@@ -211,7 +211,11 @@ function goToOwner() {
 		client.sendRequest<Location>("textDocument/goToOwner", params)
 		.then(function (result) {
 			if (result) {
-				editorGoTo(result);
+				if(result.uri)
+				{
+					result.uri = Uri.parse(result.uri.toString());
+					editorGoTo(result);
+				}
 			}
 		});
 	}
