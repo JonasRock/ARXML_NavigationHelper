@@ -1,5 +1,5 @@
 import * as net from 'net';
-import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, TextEditor, Position, ViewColumn, commands, TextEditorCursorStyle, Selection, Uri, Range, TextEditorRevealType, Location, ThemeIcon } from 'vscode';
+import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, TextEditor, Position, ViewColumn, commands, TextEditorCursorStyle, Selection, Uri, Range, TextEditorRevealType, Location, ThemeIcon, TreeView } from 'vscode';
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, Command, Disposable } from 'vscode-languageclient';
 import * as child_process from 'child_process';
 import * as path from 'path';
@@ -40,11 +40,12 @@ export function deactivate() {
 function registerTreeView() {
 	
 	let shortnameTreeDataProvider = new ShortnameTreeProvider(window.activeTextEditor?.document.uri.toString());
-	disposables.push(window.registerTreeDataProvider('arxmlNavigationHelper.shortnames', shortnameTreeDataProvider));
+	let tv = window.createTreeView("arxmlNavigationHelper.shortnames", {"showCollapseAll": true, "canSelectMany": false, "treeDataProvider": shortnameTreeDataProvider});
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeDefinition', definition));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.treeReferences', references));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.refreshTreeView', () => shortnameTreeDataProvider.refresh()));
 	disposables.push(commands.registerCommand('arxmlNavigationHelper.goToOwner', goToOwner));
+	disposables.push(commands.registerCommand('arxmlNavigationHelper.openInTreeView', () => openInTreeView(tv)));
 	window.onDidChangeActiveTextEditor(() => shortnameTreeDataProvider.refresh());
 }
 
@@ -93,7 +94,7 @@ function createServerWithSocket(executablePath: string) {
 			var portNr: Number = ((server.address() as any).port);
 			console.log("Listening on Port " + portNr);
 			//Comment out next line if you want to start the server yourself for debugging etc
-			exec = child_process.spawn(executablePath, [portNr.toString()]);
+			//exec = child_process.spawn(executablePath, [portNr.toString()]);
 		});
 	});
 }
@@ -146,22 +147,35 @@ export class ShortnameTreeProvider implements TreeDataProvider<Shortname> {
 	getTreeItem(element: Shortname): TreeItem {
 		return element;
 	}
+	
+	getParent(element?: Shortname): Thenable<Shortname | null> {
+		let params = { path: element?.path, uri: this._uri };
+		return Promise.resolve<Shortname | null>(
+			client.sendRequest<ShortnameElement>("treeView/getParentElement", params)
+			.then(function (result) {
+				if (!result) {
+					return null;
+				}
+				return new Shortname(result);
+			})
+		);
+	}
 
 	getChildren(element?: Shortname): Thenable<Shortname[]> {
 		let params = { path: element?.path, uri: this._uri, unique: element?.contextValue === "unique" };
 		return Promise.resolve<Shortname[]>(
 			client.sendRequest<ShortnameElement[]>("treeView/getChildren", params)
-			.then(function (result) {
+				.then(function (result) {
 					let a = createShortnamesFromShortnameElements(result);
 					return a;
 				})
-				);
-			}
-			
-			refresh(): void {
-				if (client.initializeResult) {
-					if (window.activeTextEditor) {
-						if (window.activeTextEditor.document.languageId === "xml") {
+		);
+	}
+
+	refresh(): void {
+		if (client.initializeResult) {
+			if (window.activeTextEditor) {
+				if (window.activeTextEditor.document.languageId === "xml") {
 					this._uri = window.activeTextEditor.document.uri.toString();
 					this._onDidChangeTreeData.fire();
 				}
@@ -234,6 +248,22 @@ function goToOwner() {
 					result.uri = Uri.parse(result.uri.toString());
 					editorGoTo(result);
 				}
+			}
+		});
+	}
+}
+
+function openInTreeView(treeView: TreeView<Shortname | undefined>) {
+	if(window.activeTextEditor) {
+		let params = {
+			uri: window.activeTextEditor.document.uri.toString(),
+			position: window.activeTextEditor.selection.active
+		};
+		client.sendRequest<ShortnameElement>("treeView/getNearestShortname", params)
+		.then(function(result) {
+			if (result) {
+				let sn = new Shortname(result);
+				treeView.reveal(sn);
 			}
 		});
 	}

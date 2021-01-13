@@ -56,6 +56,11 @@
 					"command": "arxmlNavigationHelper.goToOwner",
 					"when": "editorTextFocus",
 					"group": "arxmlNavigationHelper"
+				},
+				{
+					"command": "arxmlNavigationHelper.openInTreeView",
+					"when": "editorTextFocus",
+					"group": "arxmlNavigationHelper"
 				}
 			],
 			"commandPalette": [
@@ -90,6 +95,10 @@
 			{
 				"command": "arxmlNavigationHelper.goToOwner",
 				"title": "Go to Parent Shortname"
+			},
+			{
+				"command": "arxmlNavigationHelper.openInTreeView",
+				"title": "Open in Tree View"
 			},
 			{
 				"command": "arxmlNavigationHelper.restartLanguageServer",
