@@ -262,8 +262,10 @@ function openInTreeView(treeView: TreeView<Shortname | undefined>) {
 		client.sendRequest<ShortnameElement>("treeView/getNearestShortname", params)
 		.then(function(result) {
 			if (result) {
-				let sn = new Shortname(result);
-				treeView.reveal(sn);
+				if(result.name.length) {
+					let sn = new Shortname(result);
+					treeView.reveal(sn);
+				}
 			}
 		});
 	}
