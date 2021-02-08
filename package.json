@@ -11,7 +11,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:xml"
+		"onLanguage:xml",
+		"onCustomEditor:xml-grid-view.gridView"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -94,7 +95,7 @@
 			},
 			{
 				"command": "arxmlNavigationHelper.goToOwner",
-				"title": "Go to Parent Shortname"
+				"title": "Go to Reference Owner"
 			},
 			{
 				"command": "arxmlNavigationHelper.openInTreeView",

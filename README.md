@@ -14,9 +14,10 @@ For bigger files (>50MB) VSCode disables extensions. To get around this, the ext
 ## Features ##
 
 - **Tree view**: Shows the tree structure of shortname element, in what file they are located and makes navigating easy
-- **Go to definition**: Jump to the corresponding SHORT-NAME element by clicking on the corresponding path part on a REF element.
+- **Open in tree view**: Open the Tree View at your current location
+- **Go to definition**: Jump to the corresponding SHORT-NAME element by clicking on the corresponding path part on a REF element
 - **Go to references**: Show all REF elements that point to this SHORT-NAME element
-- **Go to parent shortname**: Jump to the parent shortname element of a given reference
+- **Go to reference owner**: Jump to the parent shortname element that owns the given reference
 - **Hover information**: Shows the full path of a given shortname, and other elements its referencing. These hovers can show how many references the element contains, and links to a list of them
 - **Open models split up over multiple files**: By using "open folder", all .arxml files in that folder get parsed together into one model for references, treeView, navigation etc. Every feature works across files too. Important: to open multiple files as a single mode, use the open folder feature of VSCode, all the .arxml files need to be in this directory
 

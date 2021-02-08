@@ -94,7 +94,7 @@ function createServerWithSocket(executablePath: string) {
 			var portNr: Number = ((server.address() as any).port);
 			console.log("Listening on Port " + portNr);
 			//Comment out next line if you want to start the server yourself for debugging etc
-			//exec = child_process.spawn(executablePath, [portNr.toString()]);
+			exec = child_process.spawn(executablePath, [portNr.toString()]);
 		});
 	});
 }
