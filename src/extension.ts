@@ -2,6 +2,7 @@ import * as net from 'net';
 import { ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window, EventEmitter, Event, TextEditor, Position, ViewColumn, commands, TextEditorCursorStyle, Selection, Uri, Range, TextEditorRevealType, Location, ThemeIcon, TreeView } from 'vscode';
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, Command, Disposable } from 'vscode-languageclient';
 import * as child_process from 'child_process';
+import * as os from 'os';
 import * as path from 'path';
 import { Server } from 'http';
 import { stringify } from 'querystring';
@@ -29,7 +30,12 @@ export function activate(context: ExtensionContext) {
 	}));
 	
 	
-	let arxmlLSPath: string = path.join(__dirname, "../ARXML_LanguageServer.exe"); //Path to LanguageServer Executable
+	let arxmlLSPath: string;
+	if (os.platform() === "win32") {
+		arxmlLSPath = path.join(__dirname, "../ARXML_LanguageServer_Windows.exe"); //Path to LanguageServer Executable
+	} else {
+		arxmlLSPath = path.join(__dirname, "../ARXML_LanguageServer_Linux"); //Linux executable
+	}
 	return launchServer(context, arxmlLSPath);
 }
 
@@ -208,7 +214,7 @@ function createShortnamesFromShortnameElements(elems: ShortnameElement[]): Short
 
 function definition(node: Shortname) {
 	if (node.label) {
-		let range = new Range(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.length - 1);
+		let range = new Range(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.toString().length - 1);
 		if (node.uri) {
 			let loc = new Location(node.uri, range);
 			editorGoTo(loc);
@@ -221,7 +227,7 @@ function definition(node: Shortname) {
 
 function references(node: Shortname) {
 	if (node.label) {
-		let range = new Range(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.length - 1);
+		let range = new Range(node.pos.line, node.pos.character - 1, node.pos.line, node.pos.character + node.label.toString().length - 1);
 		if (node.uri) {
 			let loc = new Location(node.uri, range);
 			editorGoTo(loc, () => {
