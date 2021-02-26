@@ -50,3 +50,7 @@ Files first have to be parsed by the extension.
 This takes a couple of seconds for bigger files (around 5 seconds for 170MB for me).
 Afterwards jumps should be almost instant.
 Things can take a while to load, especially on bigger files because VSCode needs to load in all the surrounding areas for the references, the extension itself cannot speed that up.
+
+## Backend ##
+
+The [ARXML Language Server](https://github.com/JonasRock/ARXML_LanguageServer) serves as the backend using the language server protocol.

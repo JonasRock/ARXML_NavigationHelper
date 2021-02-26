@@ -3,7 +3,10 @@
 	"displayName": "ARXML Navigation Helper",
 	"description": "Provides reference navigation for ARXML files",
 	"publisher": "jonasrock",
-	"version": "0.1.0",
+	"version": "0.2.0",
+	"repository": {
+		"url": "https://github.com/JonasRock/ARXML_NavigationHelper"
+	},
 	"engines": {
 		"vscode": "^1.49.0"
 	},
@@ -107,7 +110,6 @@
 			}
 		]
 	},
-
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
